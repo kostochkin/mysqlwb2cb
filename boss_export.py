@@ -75,7 +75,13 @@ def prepare_files(preparedModel):
         vars = (', '.join([str(i) for i in columnVars]))
         output = "-module(%s, [%s]).\n-compile(export_all).\n" % (moduleName, vars)
         for key in belongs_to[tab]:
-            output += "-belongs_to(%s).\n" % (key.referencedColumns[0].owner.name)
+            refOwner = key.referencedColumns[0].owner.name
+            guessFKey = refOwner + "_id"
+            realFKey = key.columns[0].name
+            if guessFKey == realFKey:
+                output += "-belongs_to(%s).\n" % (refOwner)
+            else:
+                output += "-belongs_to_%s(%s).\n" % (refOwner, realFKey)
         for key in has[tab]:
             if key.many == 0:
                 output += "-has({%s, 1}).\n" % (key.owner.name)
@@ -161,6 +167,7 @@ def ensure_dir(path):
     if (not os.path.isdir(path)):
         print "Create dir: %s" % (path)
         os.makedirs(path, 0755)
-    else:
-        print "Dir %s exists" % (path)
-    
+
+#test script
+#boss_export(grt.root.wb.doc.physicalModels[0])
+
