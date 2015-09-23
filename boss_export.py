@@ -24,13 +24,14 @@
 from inflection_grt import *
 from wb import *
 import grt
+import os
 
 ModuleInfo = DefineModule('boss_export', description="Boss export", author="Konstantin Gorshkov", version="0.1")
 
 @ModuleInfo.plugin("boss_export", "Export to Chicago Boss App", input=[wbinputs.currentModel()], pluginMenu="Utilities")
 @ModuleInfo.export(grt.INT, grt.classes.workbench_physical_Model)
 def boss_export(model):
-    path = get_filename(model)
+    path = get_path(model)
     if path != "":
         write_files(path, (prepare_files(prepare_relationships(model))))
     return 0
@@ -82,7 +83,7 @@ def prepare_files(preparedModel):
                 output += "-has({%s, many}).\n" % (pluralize(key.owner.name))
         for key in has_through[tab]:
             output += show_through_fun(tab, key)
-        outputs.append({'filename': "src/model/" + moduleName + ".erl", 'contents': output})
+        outputs.append({'filepath': "src/model", 'filename': moduleName + ".erl", 'contents': output})
     return outputs
 
 def has_id_col(columns):
@@ -142,16 +143,24 @@ def any_type(col, types):
 
 def write_files(path, pmodel):
     for filedata in pmodel:
-        filename = path + "/" + filedata['filename']
+        fullpath = path + "/" + filedata['filepath']
+        filename = fullpath + "/" + filedata['filename']
+        ensure_dir(fullpath)
         print "Write file: %s" % (filename)
         with open(filename, 'w') as file:
             file.write(filedata['contents'])
 
-def get_filename(model):
+def get_path(model):
     for diagram in model.diagrams:
         for figure in diagram.figures:
             if figure.name == 'cb application path':
                 return figure.text
     return ""
 
-
+def ensure_dir(path):
+    if (not os.path.isdir(path)):
+        print "Create dir: %s" % (path)
+        os.makedirs(path, 0755)
+    else:
+        print "Dir %s exists" % (path)
+    
