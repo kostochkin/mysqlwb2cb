@@ -25,6 +25,7 @@ from inflection_grt import *
 from wb import *
 import grt
 import os
+import re
 
 ModuleInfo = DefineModule('boss_export', description="Boss export", author="Konstantin Gorshkov", version="0.1")
 
@@ -76,12 +77,15 @@ def prepare_files(preparedModel):
         output = "-module(%s, [%s]).\n-compile(export_all).\n" % (moduleName, vars)
         for key in belongs_to[tab]:
             refOwner = key.referencedColumns[0].owner.name
-            guessFKey = refOwner + "_id"
-            realFKey = key.columns[0].name
-            if guessFKey == realFKey:
+            guessField = refOwner + "_id"
+            realField = key.columns[0].name
+            if guessField == realField:
                 output += "-belongs_to(%s).\n" % (refOwner)
             else:
-                output += "-belongs_to_%s(%s).\n" % (refOwner, realFKey)
+                realFieldMatch = re.match("(.*)_id$", realField)
+                if hasattr(realFieldMatch, 'group'):
+                    realField = realFieldMatch.group(1)
+                output += "-belongs_to_%s(%s).\n" % (refOwner, realField)
         for key in has[tab]:
             if key.many == 0:
                 output += "-has({%s, 1}).\n" % (key.owner.name)

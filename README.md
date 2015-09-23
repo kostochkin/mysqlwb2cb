@@ -2,6 +2,7 @@
 Export ER model from MySQL Workbench to Chicago Boss ORM
 
 Chicago Boss: http://chicagoboss.org
+
 MySQL Workbench: https://www.mysql.com/products/workbench/
 
 Installing:
