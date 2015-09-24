@@ -65,7 +65,6 @@ def prepare_files(preparedModel):
     tables = preparedModel['tables']
     has_through = preparedModel['has_through']
     outputs = []
-    #prepare files to export
     for tab in tables:
         moduleName = singularize(tab.name)
         columns = tab.columns
@@ -123,19 +122,19 @@ def show_module_param(col, fkeys):
     return var + show_module_param_type(col)
 
 def show_module_param_type(col):
-    if any_type(col, ["VARCHAR"]):
+    if any_type(col, ["VARCHAR", "TEXT"]):
         return "::string()"
     elif is_type(col, "TIMESTAMP"):
         return "::timestamp()"
     elif is_type(col, "DATETIME"):
         return "::datetime()"
-    elif any_type(col, ["INT"]):
+    elif is_type(col, "INT"):
         return "::integer()"
     elif is_type(col, "DATE"):
         return "::date()"
-    elif is_type(col, "BINARY"):
+    elif any_type(col, ["BINARY", "BLOB"]):
         return "::binary()"
-    elif is_type(col, "FLOAT"):
+    elif any_type(col, ["FLOAT", "REAL", "DOUBLE"]):
         return "::float()"
     elif is_type(col, "BOOL"):
         return "::boolean()"
