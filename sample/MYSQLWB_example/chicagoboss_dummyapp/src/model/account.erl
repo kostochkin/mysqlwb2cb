@@ -1,0 +1,3 @@
+-module(account, [Id, Username::string(), Password::string(), Email::string()]).
+-compile(export_all).
+-has({student, 1}).

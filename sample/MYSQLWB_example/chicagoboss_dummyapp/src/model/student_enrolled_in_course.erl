@@ -1,0 +1,4 @@
+-module(student_enrolled_in_course, [Id, StudentId, CourseId]).
+-compile(export_all).
+-belongs_to(student).
+-belongs_to(course).
