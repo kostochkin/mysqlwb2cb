@@ -75,7 +75,7 @@ def prepare_files(preparedModel):
         vars = (', '.join([str(i) for i in columnVars]))
         output = "-module(%s, [%s]).\n-compile(export_all).\n" % (moduleName, vars)
         for key in belongs_to[tab]:
-            refOwner = key.referencedColumns[0].owner.name
+            refOwner = singularize(key.referencedColumns[0].owner.name)
             guessField = refOwner + "_id"
             realField = key.columns[0].name
             if guessField == realField:
