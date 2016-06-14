@@ -73,27 +73,49 @@ def prepare_files(preparedModel):
             if column.name != 'id':
                 columnVars.append(show_module_param(column, belongs_to[tab]))
         vars = (', '.join([str(i) for i in columnVars]))
-        output = "-module(%s, [%s]).\n-compile(export_all).\n" % (moduleName, vars)
-        for key in belongs_to[tab]:
-            refOwner = singularize(key.referencedColumns[0].owner.name)
-            guessField = refOwner + "_id"
-            realField = key.columns[0].name
-            if guessField == realField:
-                output += "-belongs_to(%s).\n" % (refOwner)
-            else:
-                realFieldMatch = re.match("(.*)_id$", realField)
-                if hasattr(realFieldMatch, 'group'):
-                    realField = realFieldMatch.group(1)
-                output += "-belongs_to_%s(%s).\n" % (refOwner, realField)
-        for key in has[tab]:
-            if key.many == 0:
-                output += "-has({%s, 1}).\n" % (singularize(key.owner.name))
-            else:
-                output += "-has({%s, many}).\n" % (pluralize(key.owner.name))
-        for key in has_through[tab]:
-            output += show_through_fun(tab, key)
+        output =  "-module(%s, [%s]).\n-compile(export_all).\n" % (moduleName, vars)
+        output += render_belongs_to(tab, belongs_to)
+        output += render_has(tab, has)
+        output += render_has_through(tab, has_through)
         outputs.append({'filepath': "src/model", 'filename': moduleName + ".erl", 'contents': output})
     return outputs
+
+def render_belongs_to(tab, belongs_to):
+    output = ""
+    for key in belongs_to[tab]:
+        refOwner = singularize(key.referencedColumns[0].owner.name)
+        guessField = refOwner + "_id"
+        realField = key.columns[0].name
+        if guessField == realField:
+            output += "-belongs_to(%s).\n" % (refOwner)
+        else:
+            realFieldMatch = re.match("(.*)_id$", realField)
+            if hasattr(realFieldMatch, 'group'):
+                realField = realFieldMatch.group(1)
+            output += "-belongs_to_%s(%s).\n" % (refOwner, realField)
+    return output
+
+def render_has(tab, has):
+    output = ""
+    for key in has[tab]:
+        refOwner = singularize(key.referencedColumns[0].owner.name)
+        guessField = refOwner + "_id"
+        realField = key.columns[0].name
+        if guessField == realField:
+            fk = ""
+        else:
+            fk = ", [{foreign_key, %s}]" % realField
+        if key.many == 0:
+            output += "-has({%s, 1%s}).\n" % (singularize(key.owner.name), fk)
+        else:
+            output += "-has({%s, many%s}).\n" % (pluralize(key.owner.name), fk)
+    return output
+
+def render_has_through(tab, has_through):
+    output = ""
+    for key in has_through[tab]:
+        output += show_through_fun(tab, key)
+    return output
 
 def has_id_col(columns):
     for col in columns:
