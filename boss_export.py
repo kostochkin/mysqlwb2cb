@@ -49,7 +49,7 @@ def prepare_relationships(pm):
     for tab in pm.catalog.schemata[0].tables:
         tables.append(tab)
         if hasattr(tab, 'foreignKeys'):
-            is_has_through = len(tab.foreignKeys) == 2 and not has_id_col(tab.columns)
+            is_has_through = len(tab.foreignKeys) == 2
             for key in tab.foreignKeys:
                 belongs_to[tab].append(key)
                 for ref in key.referencedColumns:
@@ -87,7 +87,7 @@ def prepare_files(preparedModel):
                 output += "-belongs_to_%s(%s).\n" % (refOwner, realField)
         for key in has[tab]:
             if key.many == 0:
-                output += "-has({%s, 1}).\n" % (key.owner.name)
+                output += "-has({%s, 1}).\n" % (singularize(key.owner.name))
             else:
                 output += "-has({%s, many}).\n" % (pluralize(key.owner.name))
         for key in has_through[tab]:
@@ -109,9 +109,14 @@ def show_through_fun(tab, through_tab):
         if tab_ != tab:
             through_col = fk.columns[0].name
             target_tab = tab_
-    output =  "\n{}() ->\n".format(pluralize(target_tab.name))
+    fn_name = "{}_records".format(pluralize(through_tab.name))
+    output =  "\n{}() -> {}([]).\n".format(fn_name, fn_name)
+    output += "\n{}(Conditions) ->\n".format(fn_name)
     output += "\tIds = [X:{}() || X <- {}()],\n".format(through_col, pluralize(through_tab.name))
-    output += "\tboss_db:find({}, [{{id, 'in', Ids}}]).\n".format(target_tab.name)
+    output += "\tcase Ids of\n"
+    output += "\t\t [] -> [];\n"
+    output += "\t\t _  -> boss_db:find({}, [{{id, 'in', Ids}} | Conditions])\n".format(target_tab.name)
+    output += "\tend.\n"
     return output
 
 def show_module_param(col, fkeys):
@@ -172,5 +177,5 @@ def ensure_dir(path):
         os.makedirs(path, 0755)
 
 #test script
-#boss_export(grt.root.wb.doc.physicalModels[0])
+boss_export(grt.root.wb.doc.physicalModels[0])
 
